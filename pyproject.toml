@@ -1,7 +1,7 @@
 [project]
-name = "qurrent-workflow-template"
+name = "workforce-specs"
 version = "0.1"
-description = "Template for creating customer workflows"
+description = "A collection of workforce specifications"
 readme = "README.md"
 authors = [
     { name = "Qurrent, Inc", email = "team@qurrent.ai" }
