@@ -1,0 +1,13 @@
+## This is an example config file. Copy this file and rename it to config.yaml
+
+CUSTOMER_KEY_DEV:
+
+LLM_KEYS:
+  ## OpenAI ##
+  OPENAI_API_KEY:
+  OPENAI_ORGANIZATION: org-5N0mKM1NT2vKlYR057ESt61p
+
+  # ## Anthropic ##
+  # ANTHROPIC_API_KEY:
+
+  # See full list of supported models & key names at https://docs.litellm.ai/docs/providers

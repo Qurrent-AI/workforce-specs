@@ -1,0 +1,156 @@
+# In my-app-repo/.github/workflows/ci-cd.yaml
+name: Application CI/CD Orchestrator
+
+run-name: ${{ github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true && (github.event.pull_request.base.ref == 'main' || github.event.pull_request.base.ref == 'staging') && format('Deploy to {0} (Merged PR {1})', github.event.pull_request.base.ref, github.event.number) || github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'staging') && format('Deploy to {0} (Push)', github.ref_name) || github.event_name == 'push' && github.ref_name == 'development' && format('Build Dev (Push to {0})', github.ref_name) || format('CI/CD - {0} ({1})', github.ref_name, github.event_name) }}
+
+on:
+  push:
+    branches:
+      - development
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+      - staging
+  workflow_dispatch: # Allow manual triggering with inputs if needed later
+
+env:
+  ACTIONS_RUNNER_DEBUG: true
+  ACTIONS_STEP_DEBUG: true
+
+permissions:
+  contents: read
+  id-token: write
+  packages: write
+
+jobs:
+  # Job to determine context and load app-specific config
+  determine-context-and-config: # Renamed job for clarity
+    name: Determine Context and Load Config
+    runs-on: ubuntu-latest
+    outputs:
+      target_branch: ${{ steps.vars.outputs.target_branch }}
+      should_build: ${{ steps.vars.outputs.should_build }}
+      should_deploy: ${{ steps.vars.outputs.should_deploy }}
+      # Outputs from load-env-config
+      environment: ${{ steps.config.outputs.environment }}
+      zone: ${{ steps.config.outputs.zone }}
+      project_id: ${{ steps.config.outputs.project_id }}
+      registry: ${{ steps.config.outputs.registry }} # Needed by build? Pass if so.
+      image_name: ${{ steps.config.outputs.image_name }} # Needed by build? Pass if so.
+      service_account: ${{ steps.config.outputs.service_account }}
+      workload_identity_provider: ${{ steps.config.outputs.workload_identity_provider }}
+      vm_tag: ${{ steps.config.outputs.vm_tag }}
+      extra_env_variables: ${{ steps.config.outputs.extra_env_variables }}
+    steps:
+      # Checkout the application code FIRST so config can be read
+      - name: Checkout Application Code
+        uses: actions/checkout@v3
+
+      - name: Set Variables based on Trigger
+        id: vars
+        run: |
+          # --- Script to determine BRANCH_NAME, SHOULD_BUILD, SHOULD_DEPLOY ---
+          # (Use the version from previous conversation steps)
+          # ... bash logic here ...
+          BRANCH_NAME=""
+          # Default to strings 'true'/'false' for easier bash logic
+          SHOULD_BUILD="false"
+          SHOULD_DEPLOY="false"
+          EVENT_NAME="${{ github.event_name }}"
+          REF_NAME="${{ github.ref_name }}"
+          PR_ACTION="${{ github.event.action }}"
+          PR_MERGED="${{ github.event.pull_request.merged }}"
+          PR_BASE_REF="${{ github.event.pull_request.base.ref }}"
+
+          echo "--- Determining Context ---"
+          echo "Event: $EVENT_NAME, Ref: $REF_NAME, PR Action: $PR_ACTION, PR Merged: $PR_MERGED, PR Base Ref: $PR_BASE_REF"
+
+          # 1. Merged PR to main or staging -> Build and Deploy
+          if [[ "$EVENT_NAME" == "pull_request" && "$PR_ACTION" == "closed" && "$PR_MERGED" == "true" && ("$PR_BASE_REF" == 'main' || "$PR_BASE_REF" == 'staging') ]]; then
+            echo "Condition: Merged PR to main/staging detected."
+            BRANCH_NAME="$PR_BASE_REF"
+            SHOULD_BUILD="true"
+            SHOULD_DEPLOY="true"
+          # NEW: Merged PR to development -> Build Only
+          elif [[ "$EVENT_NAME" == "pull_request" && "$PR_ACTION" == "closed" && "$PR_MERGED" == "true" && "$PR_BASE_REF" == 'development' ]]; then
+            echo "Condition: Merged PR to development detected."
+            BRANCH_NAME="$PR_BASE_REF"
+            SHOULD_BUILD="true"
+            SHOULD_DEPLOY="false"
+          # 2. Push to development -> Build Only
+          elif [[ "$EVENT_NAME" == "push" && "$REF_NAME" == 'development' ]]; then
+            echo "Condition: Push to development detected."
+            BRANCH_NAME="$REF_NAME"
+            SHOULD_BUILD="true"
+            SHOULD_DEPLOY="false"
+          # 3. Push to main or staging -> Do Nothing (actions via PR only)
+          elif [[ "$EVENT_NAME" == "push" && ("$REF_NAME" == 'main' || "$REF_NAME" == 'staging') ]]; then
+            echo "Condition: Push to main/staging detected. Build/Deploy skipped (use PR merge)."
+            BRANCH_NAME="$REF_NAME" # Still set branch for context, but actions are false
+            SHOULD_BUILD="false"
+            SHOULD_DEPLOY="false"
+          # 4. Manual dispatch -> Build Dev Only (Example)
+          elif [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            echo "Condition: Manual dispatch detected."
+            BRANCH_NAME="development" # Default context
+            SHOULD_BUILD="true" # Default to build
+            SHOULD_DEPLOY="false" # Default to no deploy
+          # 5. Other cases -> Do Nothing
+          else
+            echo "Condition: Event/Ref not configured for build/deploy actions."
+            BRANCH_NAME="$REF_NAME" # Use ref_name for context if available
+            SHOULD_BUILD="false"
+            SHOULD_DEPLOY="false"
+          fi
+
+          # Set a default/fallback branch name if still empty, but keep actions false
+          if [[ -z "$BRANCH_NAME" ]]; then
+            echo "Warning: Could not determine target branch context. Setting default and skipping actions."
+            BRANCH_NAME="unknown"
+            SHOULD_BUILD="false"
+            SHOULD_DEPLOY="false"
+          fi
+
+          echo "--- Final Context --- "
+          echo "Target Branch: $BRANCH_NAME"
+          echo "Should Build: $SHOULD_BUILD"
+          echo "Should Deploy: $SHOULD_DEPLOY"
+          echo "--------------------"
+          echo "target_branch=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          # Convert bash strings 'true'/'false' to boolean literals for YAML compatibility
+          echo "should_build=$( [[ $SHOULD_BUILD == "true" ]] && echo true || echo false )" >> $GITHUB_OUTPUT
+          echo "should_deploy=$( [[ $SHOULD_DEPLOY == "true" ]] && echo true || echo false )" >> $GITHUB_OUTPUT
+
+      # Load environment config using the reusable action AFTER checking out app code
+      - name: Load environment configuration
+        id: config
+        # Call the action from the reusable repo, using the determined branch
+        uses: Qurrent-AI/workflow-pipelines/.github/actions/load-env-config@v1.1
+        with:
+          branch: ${{ steps.vars.outputs.target_branch }}
+
+  # Call the standard orchestrator, passing all necessary context and config
+  run-standard-cicd:
+    name: Run Standard CI/CD Process for ${{ needs.determine-context-and-config.outputs.target_branch }}
+    needs: determine-context-and-config # Depends on the context/config job
+    if: needs.determine-context-and-config.outputs.target_branch != '' && needs.determine-context-and-config.outputs.target_branch != 'unknown'
+    uses: Qurrent-AI/workflow-pipelines/.github/workflows/standard_app_cicd.yaml@v1.1
+    with: # Pass context AND config values as inputs
+      target_branch: ${{ needs.determine-context-and-config.outputs.target_branch }}
+      should_build: ${{ needs.determine-context-and-config.outputs.should_build == 'true' }}
+      should_deploy: ${{ needs.determine-context-and-config.outputs.should_deploy == 'true' }}
+      # Pass config values needed by downstream workflows
+      project_id: ${{ needs.determine-context-and-config.outputs.project_id }}
+      zone: ${{ needs.determine-context-and-config.outputs.zone }}
+      service_account: ${{ needs.determine-context-and-config.outputs.service_account }}
+      workload_identity_provider: ${{ needs.determine-context-and-config.outputs.workload_identity_provider }}
+      vm_tag: ${{ needs.determine-context-and-config.outputs.vm_tag }}
+      environment: ${{ needs.determine-context-and-config.outputs.environment }}
+      registry: ${{ needs.determine-context-and-config.outputs.registry }}
+      image_name: ${{ needs.determine-context-and-config.outputs.image_name }}
+      extra_env_variables: ${{ needs.determine-context-and-config.outputs.extra_env_variables }}
+      # Container security scanning configuration (required)
+      enable_container_security_scan: true
+      security_scan_fail_on_severity: 'pass'  # Options: critical|high|medium|low|pass
+      # image_url_override: '' # Only pass if needed

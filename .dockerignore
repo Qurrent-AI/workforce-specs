@@ -1,0 +1,15 @@
+README.md
+venv/
+.venv/
+.mypy_cache
+.vscode
+.DS_Store
+*.swp
+.github
+.flake8
+.isort.cfg
+mypy.ini
+.pre-commit-config.yaml
+config.example.yaml
+
+evals/*

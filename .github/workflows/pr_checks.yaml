@@ -1,0 +1,31 @@
+# Application Repository PR Checks
+# Copy this to: my-app-repo/.github/workflows/pr_checks.yaml
+
+name: PR Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main, staging]
+
+permissions:
+  contents: write  # Required for dependabot auto-merge functionality
+  pull-requests: write
+  checks: read
+  statuses: read
+
+jobs:
+  run-standard-pr-checks:
+    name: Run Standard PR Checks
+    uses: Qurrent-AI/workflow-pipelines/.github/workflows/standard_pr_checks.yaml@v1.1
+    with:
+      # PR context
+      base_ref: ${{ github.base_ref }}
+      head_ref: ${{ github.head_ref }}
+      pr_actor: ${{ github.actor }}
+      python-version: '3.11.6'
+
+      # Feature flags
+      enable-version-bump-check: true
+      enable-dependabot-automation: false  # 🚫 Dependabot disabled
+    secrets: inherit

@@ -1,0 +1,27 @@
+[project]
+name = "qurrent-workflow-template"
+version = "0.1"
+description = "Template for creating customer workflows"
+readme = "README.md"
+authors = [
+    { name = "Qurrent, Inc", email = "team@qurrent.ai" }
+]
+license = { text = "Proprietary License" }
+classifiers = [
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+urls = { Homepage = "https://qurrent.ai" }
+
+dependencies = [
+    "lxml_html_clean",
+    "PyYAML",
+    "requests",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pre-commit",
+]

@@ -1,0 +1,39 @@
+# Weekly Security Scanning - Pure Vulnerability Detection
+# Copy this to: my-app-repo/.github/workflows/weekly_security.yaml
+# 🔍 SCAN-ONLY SECURITY (No automated updates)
+
+name: Weekly Security Scans
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'  # Every Monday at 6 AM UTC
+  workflow_dispatch: # Manual trigger
+
+permissions:
+  contents: read
+  security-events: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  weekly-security-scans:
+    name: Run Comprehensive Security Scans
+    uses: Qurrent-AI/workflow-pipelines/.github/workflows/standard_weekly_security.yaml@v1.0
+    with:
+      # Repository context
+      repository_name: ${{ github.repository }}
+      python-version: '3.11.6'
+
+      # Vulnerability Detection (license-compliant tools)
+      enable-dependency-vulnerabilities: true  # ✅ OWASP, pip-audit, OSV Scanner, SBOM
+      enable-code-security-scan: true         # ✅ Bandit, Semgrep SAST
+      enable-secrets-scan: true               # ✅ TruffleHog secrets detection
+      enable-license-compliance: true         # ✅ License compliance checking
+
+      # 🚨 SECURITY THRESHOLDS
+      fail-on-severity: 'high'               # Fail on high/critical vulnerabilities
+                                              # Options: 'critical', 'high', 'medium', 'low', 'pass'
+                                              # 'pass' = Global bypass (never fail, reports only)
+
+      # 📊 REPORTING
+      enable-security-notifications: true     # Security summary & reports

@@ -1,0 +1,57 @@
+{
+  "main": {
+    "environment": "production",
+    "zone": "us-central1-a",
+    "project_id": "your-project-id-here",
+    "registry": "your-registry-location.pkg.dev/your-project-id/your-repository",
+    "image_name": "your-app-name:latest",
+    "service_account": "your-service-account-prod@your-project-id.iam.gserviceaccount.com",
+    "workload_identity_provider": "projects/123456789012/locations/global/workloadIdentityPools/your-pool-name/providers/your-provider-name",
+    "vm_tag": "your-vm-tag",
+    "extra_env_variables": {
+      "QURRENT_DATA_DIR": "/app/data",
+      "QURRENT_OTEL_ENABLED": "true",
+      "QURRENT_RUN_EVAL_PATH": "/app/<your-app-name>/run_eval.py",
+      "QURRENT_EVAL_SAMPLE_RATE": "0.0"
+    }
+  },
+  "staging": {
+    "environment": "staging",
+    "zone": "us-central1-a",
+    "project_id": "your-project-id-here",
+    "registry": "your-registry-location.pkg.dev/your-project-id/your-repository",
+    "image_name": "your-app-name:latest",
+    "service_account": "your-service-account-staging@your-project-id.iam.gserviceaccount.com",
+    "workload_identity_provider": "projects/123456789012/locations/global/workloadIdentityPools/your-pool-name/providers/your-provider-name",
+    "vm_tag": "your-vm-tag",
+    "extra_env_variables": {
+      "QURRENT_DATA_DIR": "/app/data",
+      "QURRENT_OTEL_ENABLED": "true",
+      "QURRENT_RUN_EVAL_PATH": "/app/<your-app-name>/run_eval.py",
+      "QURRENT_EVAL_SAMPLE_RATE": "0.0"
+    }
+  },
+  "development": {
+    "environment": "development",
+    "zone": "us-central1-a",
+    "project_id": "your-project-id-here",
+    "registry": "your-registry-location.pkg.dev/your-project-id/your-repository",
+    "image_name": "your-app-name:latest",
+    "service_account": "your-service-account-dev@your-project-id.iam.gserviceaccount.com",
+    "workload_identity_provider": "projects/123456789012/locations/global/workloadIdentityPools/your-pool-name/providers/your-provider-name",
+    "vm_tag": "your-vm-tag",
+    "extra_env_variables": {
+      "QURRENT_DATA_DIR": "/app/data",
+      "QURRENT_OTEL_ENABLED": "true",
+      "QURRENT_RUN_EVAL_PATH": "/app/<your-app-name>/run_eval.py",
+      "QURRENT_EVAL_SAMPLE_RATE": "0.0"
+    }
+  },
+  "branch_mapping": {
+    "default": "development",
+    "feature/*": "development",
+    "bugfix/*": "development",
+    "hotfix/*": "staging",
+    "release/*": "staging"
+  }
+}

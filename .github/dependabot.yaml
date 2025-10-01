@@ -1,0 +1,50 @@
+# Dependabot Configuration for Application Repository
+# Copy this to: my-app-repo/.github/dependabot.yml
+
+# 🔄 COORDINATED WITH WEEKLY SECURITY SCANS
+# - Dependabot runs: Monday 6 AM UTC (same as security scans)
+# - Strategy: Security scanner identifies issues, Dependabot provides updates
+# - Perfect workflow: Scan Monday morning, auto-fix dependencies
+
+version: 2
+updates:
+  # Python Dependencies
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"      # 6 AM Pacific Time
+      timezone: "America/Vancouver"
+    open-pull-requests-limit: 10  # Allow multiple dependency updates
+    labels:
+      - "dependencies"
+      - "automated"
+    # Security-focused configuration
+    allow:
+      - dependency-type: "direct"      # Direct dependencies
+      - dependency-type: "indirect"    # Transitive dependencies
+    # Commit message customization
+    commit-message:
+      prefix: "⬆️"
+      prefix-development: "⬆️ dev"
+      include: "scope"
+
+  # GitHub Actions Dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "07:00"  # After Python deps are updated
+      timezone: "America/Vancouver"
+    open-pull-requests-limit: 5
+    labels:
+      - "github-actions"
+      - "automated"
+    # Ignore private repositories that Dependabot can't access
+    ignore:
+      - dependency-name: "Qurrent-AI/workflow-pipelines"
+    commit-message:
+      prefix: "🔧"
+      include: "scope"
