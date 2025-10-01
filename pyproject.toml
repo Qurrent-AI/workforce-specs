@@ -1,6 +1,6 @@
 [project]
 name = "workforce-specs"
-version = "0.1"
+version = "1.0"
 description = "A collection of workforce specifications"
 readme = "README.md"
 authors = [
