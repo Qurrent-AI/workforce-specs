@@ -45,7 +45,7 @@ jobs:
     steps:
       # Checkout the application code FIRST so config can be read
       - name: Checkout Application Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
 
       - name: Set Variables based on Trigger
         id: vars
