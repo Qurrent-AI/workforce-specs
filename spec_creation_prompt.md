@@ -23,19 +23,35 @@ Derive the business narrative actually implied by code/docs:
 
 ### Phase 2 — Decision Audit
 
-In the Decision Audit, produce a non-technical, enumerated list of decisions the workforce makes, in execution order. This augments (does not replace) technical mapping. Decisions should be concise, but very granular. For decisions made by LLM-agents, mention the agent name.
-
-Enumerate each decision. For each, include:
+In the Decision Audit, produce a non-technical, enumerated list of decisions the workforce makes, in execution order. For each, include:
 
 - Decision inputs, if applicable
 - Decision outputs, including any agent actions that are user-visible or consequential; note when outcomes stem from an LLM-invoked action (i.e., an action the model can trigger)
 - Decision logic: a concise summary of the natural-language rules or criteria that govern the outcome (via LLM-prompt instructions, but also direct code)
-- Logic location: select from [1] internal code, [2] internal prompt, or [3] external prompt (refers to NL instructions outside of the agent's config file but inserted during runtime, thus enabling a non-technical outcome owner to influence the agent's behavior). Mention the specific agent, if applicable.
+- Logic location: select from [1] internal code, [2] internal prompt, or [3] external prompt (refers to NL instructions outside of the agent's config file but inserted during runtime, thus enabling a non-technical outcome owner to influence the agent's behavior). For decisions made by technical agents, mention the agent name.
 - Dependencies/missing info: list required artifact/config/data if not available; do not guess
 
-Strict omissions: Describe what the workforce decides and when, NOT how it is implemented. DO NOT include function or variable names, API URLs/endpoints/methods, data structure types (JSON schemas or references), model hyperparameters, developer-only utilities/tests, qurrent abstractions (e.g., ingress, rerun hooks), file types/paths/line numbers, internal retry/exception details without user-visible effects, snapshot/state internal, or unused/deprecated logic.
+Coverage: Be comprehensive, and capture all business-related decisions an outcome owner would understand and stake an interest in. Do NOT capture all conditionals -- focus on core decisions as seen from the perspective of the user/outcome owner. Organize by decision area for large codebases and generally list on order of execution. Only document decisions that have some clear effect on an outcome.
 
-Coverage: Be comprehensive, and capture all decisions an outcome owner would understand and stake an interest. Organize by decision area for large codebases and generally list on order of execution. Only document decisions that have some clear effect on an outcome. For example, do not document in-context "thinking" or act-then-reflect patterns that exist only internally to the LLM. Similarly, a "decision" to exit a loop provided no actions in JSON, error handling, and timeouts have no human-functional equivalence and should not be listed.
+Strict omissions: Describe what the workforce decides and when, NOT how it is implemented. DO NOT include:
+
+- Function or variable names
+- API URLs/endpoints/methods
+- Data structure types (JSON schemas or references)
+- Model hyperparameters
+- Developer-only utilities/tests
+- Qurrent abstractions (e.g., ingress, rerun hooks)
+- File types/paths/line numbers
+- Internal retry/exception details without user-visible effects
+- Snapshot/state internal
+- Insignificant conditionals (formatting, response parsing, etc.)
+- Unused/deprecated logic
+- In-context "thinking" or act-then-reflect patterns that exist only internally to the LLM
+- Decisions to exit loops with no actions
+- Error handling and timeouts with no human-functional equivalence
+- Deterministic message acceptance/rejection logic
+- LLM action execution (as opposed to the decision to invoke them)
+- Output formatting decisions (e.g., sending responses to Slack)
 
 **The Decision Audit must be outcome- and function-focused with no technical jargon. A non-programmer with expertise in creating AI-agent process maps should be able to understand and reproduce this artifact.**
 
@@ -45,19 +61,60 @@ Coverage: Be comprehensive, and capture all decisions an outcome owner would und
 
 #### Design Patterns
 
-Agent patterns:
-    - Orchestrator Agents for state-machine framing, planned actions, approvals before sending, action routing, workflow completion signals.
-    - Task Agents for unstructured parsing; if violated, note current behavior. Generally preferred in thinking-enabled LLM steps for reconciliation/transforms where implemented.
-    - Agentic Search Agents for action-driven information lookup and reflection.
+##### Console Agents and Observables
 
-Direct actions vs @llmcallables:
+Console agents and observables are presentation-layer abstractions for the observability platform (The Supervisor), distinct from technical agent implementations:
 
-    - Direct actions are called from code; returns not visible to LLM unless appended.
-    - @llmcallables are invoked by the LLM; their returns are appended to the thread. May be referred to as "actions".
+**Console Agents** (`@console_agent` decorator on Workflow methods):
 
-Instantiation:
+- Represent high-level business capabilities shown to stakeholders
+- Named as nouns (e.g., "assistant", "coordinator")
+- Orchestrate technical agents, integrations, and deterministic logic
+- No LLMs, prompts, or message threads
 
-    - Declared attributes; set in create. Note deviations.
+**Observables** (`@observable` decorator on Workflow methods):
+
+- Represent specific tasks within console agents
+- Named as processes (e.g., "handle_event", "generate_report")
+- Call `save_to_console(type='observable_output', content=...)` for business-friendly context
+
+**vs. Technical Agents:**
+
+Technical agents (Python classes extending `Agent`) provide LLM-powered reasoning with prompts and message threads. Console agents orchestrate them. Typical pattern: console agent → observables → technical agents + integrations.
+
+##### Technical Agent Patterns
+
+**Pattern Types:**
+
+- **Orchestrator Agents**: State-machine framing, planned actions, approvals before sending, action routing, workflow completion signals. Accumulate context. Use standard LLM mode (temp=0) for responsiveness.
+- **Task Agents**: Complete atomic tasks in one turn. Parse unstructured documents (PDFs, emails, images) rather than using deterministic utils. No @llmcallables. Reset message thread. Use thinking-enabled LLMs (temp=1) for accuracy.
+- **Agentic Search Agents**: Action-driven information lookup with @llmcallable(rerun_agent=True). Autonomous gathering before responding.
+
+**Pattern Selection:**
+
+- Use Task Agents for parsing unknown/unstructured data; leverage LLM robustness over brittle deterministic logic
+- Use Orchestrators for multi-step processes with uncertain flow, multiple parties, or accumulated context needs
+- Use Agentic Search when autonomous information gathering required before response
+
+**LLM Configuration:**
+
+- Orchestrators: claude-sonnet-4, temp=0, timeout=120s (optimize for speed)
+- Task Agents: claude-sonnet-4 with thinking (budget_tokens=1024), temp=1, timeout=240s (optimize for accuracy)
+
+**Orchestrator Requirements:**
+
+- Structured JSON response with `workflow_complete` boolean and `actions` array
+- Confirm external communications (Slack/email) before sending in same turn
+- Keep supervisor informed of planned actions and outcomes
+
+**Direct actions vs @llmcallables:**
+
+- Direct actions: called from code; returns not visible to LLM unless appended
+- @llmcallables: invoked by LLM; returns appended to thread; may be referred to as "actions"
+
+**Instantiation:**
+
+- Declared attributes; set in create. Note deviations.
 
 Anti-patterns to be aware of:
 
@@ -83,7 +140,17 @@ Confirm whether all data needed for the happy path exists; record gaps.
 
 #### Agents
 
-Classify agents: Orchestrator, Task, Agentic Search. For each agent, enumerate:
+Document both console agents and technical agents:
+
+**Console Agents:**
+
+- Identify which workflow methods use `@console_agent` decorator
+- Document their observable tasks (methods with `@observable` decorator)
+- Describe what technical agents, integrations, and deterministic logic they orchestrate
+- Note their docstrings (shown to stakeholders in The Supervisor)
+
+**Technical Agents:**
+Classify technical agents by pattern: Orchestrator, Task, Agentic Search. For each technical agent, enumerate:
     - Direct actions (called from code; side effects; file writes returning file_id; whether results are appended to thread)
     - @llmcallables (invoked by LLM; returns visible to model)
     - Responsibilities, instance attributes, create parameters, LLM config (model/mode/timeouts), prompt strategy (state-machine framing; structured actions discipline)
@@ -93,7 +160,7 @@ Explain agent interplay in plain language (names, roles, interactions). No code.
 #### Utilities, Dependencies & Non-LLM Functions
 
 - Inventory utilities (e.g., PDF from markdown), libraries, and why needed.
-- Note where deterministic utilities end and LLM-based parsing/transform begins.
+- Note where deterministic utilities end and technical agent parsing/transform begins.
 
 #### Feasibility & Consistency Checks: Self-Reflection
 
@@ -164,9 +231,32 @@ Documents the possible paths of workflow execution through the lens of decisions
 
 ## Agents
 
-### `[AgentClassName]`
+**Note:** Document Console Agents first (what business stakeholders see), then Technical Agents (implementation details).
+
+### Console Agents
+
+#### `[console_agent_method_name]`
+**Type:** Console Agent (method with `@console_agent` decorator)
+**Purpose:** [High-level business process this represents]
+**Docstring:** "[Non-technical description shown in The Supervisor]"
+
+**Observable Tasks:**
+
+**`[observable_method_name]()`**
+- `@observable` decorator
+- Docstring: "[Non-technical task description]"
+- Purpose: [What process or orchestration this performs]
+- Technical Agent Calls: Calls `[technical_agent_instance].[method]()` for [purpose]
+- Integration Calls: Calls `[integration_instance].[method]()` for [purpose]
+- Observability Output: `save_to_console(type='observable_output', content="[business-friendly description]")`
+- Returns: [return type and description]
+
+### Technical Agents
+
+#### `[AgentClassName]`
+**Type:** Technical Agent (extends `Agent` class)
 **Pattern:** [Orchestrator/Task/Agentic Search]
-**Purpose:** [Role and responsibilities]
+**Purpose:** [Role and responsibilities - what LLM reasoning is needed]
 **LLM:** [model_name], [thinking/standard] mode, temp=[value], timeout=[seconds]
 
 **Prompt Strategy:**
