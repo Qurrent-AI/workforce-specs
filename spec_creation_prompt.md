@@ -1,30 +1,32 @@
-### Role & Scope
+# Workflow Specification Creation
+
+## Role & Scope
 
 You are operating as an architect for the Qurrent OS workflow automation platform. Your task is to analyze an existing AI-agent workforce codebase and transform that implementation into a single, unambiguous Workforce Specification strictly following the Workforce Specification Template included at the end of this prompt. Do not generate or modify code. Your deliverable is the spec representation of the workflow embodied by the codebase.
 
-### Output
+## Output
 
 A complete workflow spec in workforce_spec.md that mirrors actual behavior (no invented logic), conforms to Qurrent OS patterns, and is internally consistent. Use the Workforce Specification Template verbatim. If a section does not apply, state why succinctly—do not delete it. Always preserve the section header and italic descriptor in "Custom Instructions" to enable a human forward deployed engineer to provide custom prompting around how the workflow spec should be configured for this particular workforce.
 
 Move through the following phases to recover and document the AI workforce:
+
 1. Overview
-2. Path Audit
+2. Decision Audit
 3. Technical Details
 
-#### Phase 1 — Narrative Overview
+### Phase 1 — Narrative Overview
 
-- Derive the business narrative actually implied by code/docs:
+Derive the business narrative actually implied by code/docs:
     - Problem & stakeholders (human/system roles surfaced in integrations and messages).
     - Happy path (plain-language, executive-friendly).
     - Value proposition (what makes it compelling based on visible capabilities).
 
-#### Phase 2 — Non-Technical Path Audit
+### Phase 2 — Decision Audit
 
-In the Agent Architecture, provide a non-technical overview of how the agents are used in the workflow and how they interact with each other. Note opportunities for human intervention.
-
-In the Decision Ledger, produce a non-technical, enumerated list of decisions the workforce makes, in execution order. This augments (does not replace) technical mapping. Decisions should be concise, but very granular.
+In the Decision Audit, produce a non-technical, enumerated list of decisions the workforce makes, in execution order. This augments (does not replace) technical mapping. Decisions should be concise, but very granular. For decisions made by LLM-agents, mention the agent name.
 
 Enumerate each decision. For each, include:
+
 - Decision inputs, if applicable
 - Decision outputs, including any agent actions that are user-visible or consequential; note when outcomes stem from an LLM-invoked action (i.e., an action the model can trigger)
 - Decision logic: a concise summary of the natural-language rules or criteria that govern the outcome (via LLM-prompt instructions, but also direct code)
@@ -33,59 +35,67 @@ Enumerate each decision. For each, include:
 
 Strict omissions: Describe what the workforce decides and when, NOT how it is implemented. DO NOT include function or variable names, API URLs/endpoints/methods, data structure types (JSON schemas or references), model hyperparameters, developer-only utilities/tests, qurrent abstractions (e.g., ingress, rerun hooks), file types/paths/line numbers, internal retry/exception details without user-visible effects, snapshot/state internal, or unused/deprecated logic.
 
-Coverage: Be comprehensive for all behaviors the outcome owner may care about—prioritize LLM-driven choices, orchestration vs iterative agent routing, approvals, external communications, artifact generation/updates, and gating criteria. Organize by decision area for large codebases and maintain execution order.
+Coverage: Be comprehensive, and capture all decisions an outcome owner would understand and stake an interest. Organize by decision area for large codebases and generally list on order of execution. Only document decisions that have some clear effect on an outcome. For example, do not document in-context "thinking" or act-then-reflect patterns that exist only internally to the LLM. Similarly, a "decision" to exit a loop provided no actions in JSON, error handling, and timeouts have no human-functional equivalence and should not be listed.
 
-**The Agent Architecture and Decision Ledger should should be outcome-focused and omit technical jargon. These artificats must be understandable and reproducible by a non-programmar with expertise in creating AI-agent process maps.**
+**The Decision Audit must be outcome- and function-focused with no technical jargon. A non-programmer with expertise in creating AI-agent process maps should be able to understand and reproduce this artifact.**
 
-#### Phase 3 - Technical Details
+### Phase 3 - Technical Details
+
 *Artificats from prior runs, in particular those with PII or other sensitive details, should be described only at a high-level. Never document API keys, tokens, database connection info, or any other secret credentials.*
 
-##### Design Patterns
+#### Design Patterns
 
-- Agent patterns
+Agent patterns:
     - Orchestrator Agents for state-machine framing, planned actions, approvals before sending, action routing, workflow completion signals.
     - Task Agents for unstructured parsing; if violated, note current behavior. Generally preferred in thinking-enabled LLM steps for reconciliation/transforms where implemented.
     - Agentic Search Agents for action-driven information lookup and reflection.
-- Direct actions vs @llmcallables
+
+Direct actions vs @llmcallables:
+
     - Direct actions are called from code; returns not visible to LLM unless appended.
     - @llmcallables are invoked by the LLM; their returns are appended to the thread. May be referred to as "actions".
-- Instantiation
+
+Instantiation:
+
     - Declared attributes; set in create. Note deviations.
 
-- Anti-patterns to be aware of:
+Anti-patterns to be aware of:
+
     - Hard-coded outputs/magic artifacts that bypass agent reasoning.
     - Over-structuring (parse-to-rigid-schema → deterministic driver) when code expects reasoning over source files.
     - Chains where downstream steps lack required inputs (e.g., filenames instead of file IDs).
     - Orchestrators not honoring confirm-before-send or structured JSON actions.
 
-##### Inputs/Outputs & Data Inventory
+#### Inputs/Outputs & Data Inventory
 
-- Build a Referenced Documents & Data Inventory:
+Build a Referenced Documents & Data Inventory:
+
     - Inputs: sources, formats, form factors; mocked vs real
     - Outputs: artifact types, formats, recipients, delivery channels (Slack/email/PDF/blob)
     - Integration triggers/payloads and success/error variations visible in code
-- Confirm whether all data needed for the happy path exists; record gaps.
 
-##### Integration Behavior
+Confirm whether all data needed for the happy path exists; record gaps.
+
+#### Integration Behavior
 
 - Enumerate external systems and how they are used.
 - Capture approval gates (e.g., confirm-before-send) and concrete message/artifact formats if present.
 
-##### Agents
+#### Agents
 
-- Classify agents: Orchestrator, Task, Agentic Search.
-- For each agent, enumerate:
+Classify agents: Orchestrator, Task, Agentic Search. For each agent, enumerate:
     - Direct actions (called from code; side effects; file writes returning file_id; whether results are appended to thread)
     - @llmcallables (invoked by LLM; returns visible to model)
     - Responsibilities, instance attributes, create parameters, LLM config (model/mode/timeouts), prompt strategy (state-machine framing; structured actions discipline)
-- Explain agent interplay in plain language (names, roles, interactions). No code.
 
-##### Utilities, Dependencies & Non-LLM Functions
+Explain agent interplay in plain language (names, roles, interactions). No code.
+
+#### Utilities, Dependencies & Non-LLM Functions
 
 - Inventory utilities (e.g., PDF from markdown), libraries, and why needed.
 - Note where deterministic utilities end and LLM-based parsing/transform begins.
 
-##### Feasibility & Consistency Checks: Self-Reflection
+#### Feasibility & Consistency Checks: Self-Reflection
 
 - Verify the call stack is executable given agent definitions and returns.
 - Validate input→output continuity (file IDs vs names, argument shapes, returned structures).
@@ -93,11 +103,12 @@ Coverage: Be comprehensive for all behaviors the outcome owner may care about—
 
 =============================
 
-### Workforce Specification Template
+## Workforce Specification Template
 
 Fill the following Workforce Specification Template exactly with the details derived from your analysis of the codebase.
 
 ```markdown
+
 # Workforce Specification Template
 
 **Contributors:** [Comma-separated list of contributors]
@@ -111,26 +122,17 @@ High-level executive-style background summary of the system: describe what it do
 [Provide custom instructions here around how to understand and document this particular workforce]
 -->
 
-## Path Audit
+## Decision Audit
 
-Defines the possible paths for workflow execution.
+Documents the possible paths of workflow execution through the lens of decisions the workforce makes.
 
-### Agent Architecture
-
-**Core Agent Responsibilities:**
-- **Functions**: [List each major function and its location in the workflow]
-    - Function 1: [Name] - [What, when, and why]
-    - Function 2: [Name] - [What, when, and why]
-- **User Touchpoints**: [Where human input/approval is required]
-
-### Decision Ledger
-- [Decision 1]
+- [1] [Decision Name (short, descriptive)]
     - Inputs: [Inputs]
     - Outputs: [Outputs]
     - Decision logic: [Decision logic]
     - Logic location: [internal code/internal prompt/external prompt]
-- [Decision 2]
-- [Decision 3]
+- [2] [Decision Name]
+- [3] [Decision Name]
 - ...
 
 ## Data & Formats

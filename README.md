@@ -8,7 +8,7 @@ This repository collects Workforce Specifications for projects in production. Th
 
 The spec is intended to be documented at a level of specificity that would enable an FDE to reproduce the workforce without the need for additional input. Aspirationally, a coding agent provided with documentation of the Qurrent OS could also approximate the implementation.
 
-The Path Audit section documents an Agent Architecture and Decision Ledger in a detailed but non-technical manner. This section may be useful to Lead AI Strategists as a 'gold standard' for process mapping AI-agent workflows.
+The Decision Audit is intended to document the core 'AI logic' in a detailed but non-technical manner. This section may be useful to Lead AI Strategists as a gold standard for process mapping AI-agent workflows.
 
 Specs are generated using Cursor's CLI agent. The bulk of the prompt is in the `spec_creation_prompt.md` at the root of this repository.
 
