@@ -100,6 +100,11 @@ Fill the following Workforce Specification Template exactly with the details der
 ```markdown
 # Workforce Specification Template
 
+#### Contributors
+<!--
+Comma-separated list of contributors to the project codebase
+-->
+
 ## Overview
 High-level executive-style background summary of the system: describe what it does and how it works.
 

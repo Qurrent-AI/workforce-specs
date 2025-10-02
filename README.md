@@ -1,7 +1,8 @@
 # Workforce Specs
 
-This repository collects Workforce Specifications for Qurrent's production workforces. The purpose of this is to:
-1. Create documentation for our projects
+This repository collects Workforce Specifications for projects in production. The purpose of this is to:
+
+1. Create documentation for our workforces
 2. Provide FDEs with an understanding of how other projects are built to take advatange of succesful design patterns
 3. Provide coding agents with references of production-grade workforce implementations
 
