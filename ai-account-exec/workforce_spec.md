@@ -11,6 +11,134 @@ The workflow supports multiple concurrent campaigns, each with custom AI logic d
 
 Create an Examples section that shows two happy-path outreach sequences.
 
+## Examples
+
+This section demonstrates two complete happy-path outreach sequences from event selection through follow-up completion.
+
+### Example 1: Portfolio Company Acquisition Event
+
+**Day 1 (8:00 AM PT) - Event Selection & Initial Outreach**
+
+1. **Event Detected**: "KKR announces acquisition of regional healthcare network MediCare Partners for $2.5B, plans digital transformation initiative"
+
+2. **EventSelector Decision**: Qualifies event based on campaign criteria (private equity activity, healthcare sector, digital transformation mention)
+
+3. **Research Phase**: Exa Research API identifies 3 target personas:
+   - Sarah Chen, VP of Digital Strategy at KKR (NYC)
+   - Michael Torres, Chief Technology Officer at MediCare Partners (Boston)
+   - Jennifer Liu, Managing Director at KKR's Healthcare Vertical (SF)
+
+4. **CRM Update**: CRMManager agent:
+   - Searches for "KKR" → finds existing company record
+   - Updates KKR company description to mention MediCare acquisition
+   - Creates new company record for "MediCare Partners" with parent association to KKR
+   - Creates contact records for all 3 personas, associates with respective companies
+
+5. **Outreach Selection & Drafting**: Outreach agent:
+   - Filters: Excludes Sarah Chen (already contacted per HubSpot phase property)
+   - Enriches: Uses Hunter.io to find Michael Torres's email (confidence: 87%)
+   - Searches web: Finds recent interview with Jennifer Liu about healthcare tech investments
+   - Drafts 2 personalized emails referencing the acquisition and each persona's role
+
+6. **Email Delivery**:
+   - Sends emails via SendGrid with BCC to HubSpot
+   - Updates HubSpot contacts: sets phase=1, next_outreach_date=(today + 3 days)
+   - Initializes metrics tracking for recipients
+
+7. **Slack Notification**: Posts summary to channel with event reasoning and outreach details
+
+**Day 4 (11:23 AM PT) - First Follow-up**
+
+8. **Follow-up Trigger**: Deterministic scheduler (hash of campaign ID + date) triggers at 11:23 AM PT
+
+9. **Contact Query**: HubSpot returns Michael Torres and Jennifer Liu (next_outreach_date within today's window)
+
+10. **Reply Check**: Retrieves recent emails for both contacts
+    - Michael Torres: No incoming emails detected
+    - Jennifer Liu: Incoming email found yesterday → removes from queue, updates phase="", sends Slack notification
+
+11. **Follow-up Drafting** (Michael only): Outreach agent:
+    - Searches web for recent MediCare news (finds post-acquisition announcement)
+    - Drafts short follow-up referencing original email and new development
+    - Uses exact same subject line (no "Re:" prefix)
+
+12. **Follow-up Delivery**:
+    - Sends via SendGrid
+    - Updates HubSpot: phase=2, next_outreach_date=(today + 5 days)
+
+**Day 9 (10:45 AM PT) - Second Follow-up**
+
+13. **Contact Query**: Returns Michael Torres (no reply detected)
+
+14. **Follow-up Drafting**: Even shorter message, references previous two touchpoints
+
+15. **Delivery**: Updates phase=3, next_outreach_date=(today + 7 days)
+
+**Day 16 (1:12 PM PT) - Final Follow-up**
+
+16. **Contact Query**: Returns Michael Torres
+
+17. **Final Follow-up**: Last attempt message, acknowledges no response
+
+18. **Delivery**: Updates phase=4, next_outreach_date="" (sequence complete)
+
+**Engagement Tracking Throughout**:
+- SendGrid webhook fires on email open (Day 4, 11:25 AM) → MetricsTracker logs to Supervisor API
+- Delivered event logged once per email
+- Open events logged unlimited times
+
+### Example 2: Funding Round Announcement
+
+**Day 1 (8:00 AM PT) - Event Selection & Initial Outreach**
+
+1. **Event Detected**: "AI startup DataFlow secures $50M Series B led by Andreessen Horowitz, announces enterprise data platform launch"
+
+2. **EventSelector Decision**: Qualifies event (growth-stage funding, AI/data sector, product launch timing)
+
+3. **Research Phase**: Identifies 2 target personas:
+   - Alex Kumar, CEO & Co-founder at DataFlow (San Francisco)
+   - Rachel Martinez, CTO at DataFlow (San Francisco)
+
+4. **CRM Update**: CRMManager agent:
+   - Searches "DataFlow" → no existing record found
+   - Creates company record for "DataFlow" with funding event in description
+   - Searches "Andreessen Horowitz" → finds existing investor record
+   - Creates company association (DataFlow as portfolio company of a16z)
+   - Creates contact records for both personas
+
+5. **Outreach Selection & Drafting**: Outreach agent:
+   - Evaluates both contacts: Selects Rachel Martinez (CTO more relevant for technical platform discussion)
+   - Email already available from research (found on company website)
+   - Searches web: Finds Rachel's recent podcast interview about data infrastructure challenges
+   - Drafts personalized email connecting Qurrent's workflow automation to DataFlow's platform needs
+
+6. **Email Delivery**: Sends to Rachel, updates HubSpot (phase=1, next_date=Day 4)
+
+**Day 4 (12:34 PM PT) - First Follow-up**
+
+7. **Follow-up Check**: Rachel Martinez queued for follow-up
+
+8. **Reply Detection**: No incoming emails detected
+
+9. **Follow-up Drafting**: Short message, references original email and podcast discussion
+
+10. **Delivery**: Updates phase=2, next_date=Day 9
+
+**Day 6 (2:15 PM) - Reply Received**
+
+11. **Engagement Detection**: HubSpot receives incoming email from Rachel (BCC forwarding)
+
+**Day 9 (10:18 AM PT) - Follow-up Trigger (Skipped)**
+
+12. **Reply Check**: Detects incoming email from Day 6
+
+13. **Queue Removal**:
+    - Updates HubSpot: phase="", next_date="" (clears follow-up sequence)
+    - Logs reply metric to Supervisor API
+    - Sends Slack notification: "Removing Rachel Martinez from follow-up queue because they have responded to outreach"
+
+14. **Sequence Complete**: No further automated outreach to this contact
+
 ## Path Audit
 
 ### Decision Ledger
@@ -20,70 +148,60 @@ Create an Examples section that shows two happy-path outreach sequences.
   - Outputs: List of Campaign objects with parsed AI logic definitions
   - Decision logic: For each Google Doc in the folder, check last modified timestamp against stored version. If new or modified, parse the document using CampaignManager agent to extract structured logic definitions (compelling event criteria, target company profile, target personas, outreach selection logic, email guidelines). If human clarification is needed, request updates via Slack and wait for human to edit document, then re-fetch and parse.
   - Logic location: Orchestration code in `server.py::configure_campaigns()` and `configuration_workflow.py::get_campaigns()`, with parsing logic in `CampaignManager` agent prompt
-  - Dependencies: Requires Google Drive service account access and valid campaign documents
 
 - **Event Selection from Webset (Daily at 8am PT per campaign)**
   - Inputs: Exa webset ID (from campaign logic), webset items with summaries, past selection history (last 30 days)
   - Outputs: List of event summary strings selected for prospecting
   - Decision logic: EventSelector agent evaluates webset items against compelling event criteria and target company criteria (both from campaign AI logic), deduplicates against past 30 days of selections, and returns qualified event summaries with reasoning
   - Logic location: External prompt in campaign definition document, injected into EventSelector agent's system prompt via variable substitution
-  - Dependencies: Valid Exa webset ID, webset must have enrichments with summary data
 
 - **Prospect Research per Event**
   - Inputs: Event summary string, target personas logic from campaign
   - Outputs: List of TargetPersona objects (name, title, company, location, email if found, LinkedIn URL, relevance explanation)
   - Decision logic: Use Exa Research API with instructions combining event summary and target personas logic to identify individuals matching persona criteria associated with the event. Retry up to 3 times on failure. If all retries fail, skip event.
   - Logic location: External prompt (target personas logic) from campaign document, combined with event summary in workflow code and passed to Exa Research API
-  - Dependencies: Valid Exa API key, Research API must be available
 
 - **CRM Record Management per Event**
   - Inputs: Event summary, list of TargetPersona objects from research
   - Outputs: Updated TargetPersona list with HubSpot contact IDs populated
   - Decision logic: CRMManager agent receives prospects and event summary, searches for matching company records by keyword, creates/updates company records with event mention in description, infers parent-portfolio relationships if detectable from event, creates/updates contact records, and associates contacts with companies. Agent works iteratively with multiple action rounds (search, then create/update). Updates prospects list with HubSpot contact IDs.
   - Logic location: Internal prompt in CRMManager agent config (crm_manager.yaml)
-  - Dependencies: HubSpot API credentials, proper record locking to avoid race conditions
 
 - **Outreach Target Selection and Email Drafting per Event**
   - Inputs: Event summary, list of TargetPersona objects with HubSpot IDs and past email activity stats, targeting criteria from campaign, email guidelines from campaign
   - Outputs: List of OutreachMessage objects (HubSpot contact ID, recipient email, subject, body)
   - Decision logic: Outreach agent evaluates prospects against targeting criteria (external logic from campaign), filters out individuals already contacted (check outreach phase in HubSpot), searches web up to 3 times for additional context if helpful, enriches missing email addresses using Hunter.io (only if confidence >50%), and drafts personalized emails per email guidelines (external logic from campaign). Agent uses rerun pattern: first turn for research actions, subsequent turn for drafting.
   - Logic location: External prompts (targeting criteria and email guidelines) from campaign document, injected into Outreach agent's system prompt
-  - Dependencies: Tavily API for web search, Hunter.io for email enrichment, valid HubSpot contact IDs
 
 - **Email Delivery and CRM Update**
   - Inputs: OutreachMessage object, demo record flag
   - Outputs: Email sent status, HubSpot contact updated with email content and next outreach date
   - Decision logic: Check if contact is demo record. If demo, send to test address (alex@qurrent.ai) instead of actual recipient. Send via SendGrid with BCC to HubSpot. If send succeeds, update HubSpot contact with subject, body, event trigger, outreach phase (set to 1), and next outreach date (3 days from today at midnight PT as epoch ms). Initialize metrics tracking for recipient email.
   - Logic location: Internal code in workflow.py::send_initial_outreach()
-  - Dependencies: SendGrid API, demo record check requires is_demo_record property in HubSpot
 
 - **Follow-up Qualification Check (Daily at deterministic time 10am-2pm PT per campaign)**
   - Inputs: HubSpot contacts with account_exec_next_outreach_date within today's PT window
   - Outputs: List of contacts requiring follow-up, or contact removed from queue
   - Decision logic: Query HubSpot for contacts where next outreach date falls within today. For each contact, check recent email history for incoming emails. If incoming email exists, log reply metric, clear outreach phase and next date in HubSpot, notify Slack, and skip follow-up. Otherwise, proceed to draft follow-up.
   - Logic location: Internal code in workflow.py::send_followup() and hubspot.py::get_contacts_requiring_follow_up()
-  - Dependencies: HubSpot custom properties (account_exec_next_outreach_date, account_exec_outreach_phase)
 
 - **Follow-up Email Drafting**
   - Inputs: HubSpot contact details (ID, name, email, company, last subject, last body, trigger, current phase)
   - Outputs: OutreachMessage for follow-up or None if no outreach drafted
   - Decision logic: Outreach agent receives contact details and current phase number. Agent can search web for additional context. Draft follow-up that references prior email but is distinct. Must use exact same subject line and email address (no "Re:" prefix). If drafting fails, notify Slack and return None.
   - Logic location: External prompts (targeting criteria and email guidelines) from campaign document apply, with follow-up-specific instructions in workflow code passed to Outreach agent
-  - Dependencies: Same as initial outreach (Tavily, Hunter.io, HubSpot)
 
 - **Follow-up Delivery and Next Phase Scheduling**
   - Inputs: OutreachMessage, contact details including current phase
   - Outputs: Email sent, HubSpot updated with next phase and date
   - Decision logic: Send follow-up via SendGrid (with demo record check). Calculate next outreach date based on phase: phase 1→3 days, phase 2→5 days, phase 3→7 days, phase 4+→no further follow-ups (clear date). Update HubSpot contact with new subject, body, incremented phase, and next date.
   - Logic location: Internal code in workflow.py::send_followup() with follow-up delay mapping (FOLLOW_UP_DELAY_DAYS)
-  - Dependencies: SendGrid API, HubSpot update permissions
 
 - **Engagement Metrics Tracking (Continuous via webhook)**
   - Inputs: SendGrid webhook events (open, delivered, bounce) with recipient email and event type
   - Outputs: Metric logged to Qurrent Supervisor API, local tracking updated
   - Decision logic: Parse webhook payload for event type and recipient email. Find workflow instance ID by searching metrics files for email. Check if event should be logged (delivered/bounce: only once; open: unlimited). If yes, post metric to Supervisor API, record event locally with timestamp.
   - Logic location: Internal code in server.py::handle_sendgrid_event() with deduplication logic in metrics.py::MetricsTracker
-  - Dependencies: SendGrid webhook configured to POST to /sendgrid-event, metrics files initialized at email send time
 
 ## High Level Architecture
 
@@ -211,21 +329,27 @@ ai-account-exec/
 │   │       ├── event_selector.yaml
 │   │       └── outreach.yaml
 │   ├── api/
+│   │   ├── gcp_storage.py
 │   │   ├── gdrive_utils.py
 │   │   ├── hubspot.py
 │   │   ├── hunterio.py
+│   │   ├── rss.py
 │   │   ├── sengrid.py
 │   │   ├── slack_utils.py
 │   │   └── tavily.py
+│   ├── cole_email_signature.html
 │   ├── configuration_workflow.py
 │   ├── metrics.py
 │   ├── models.py
 │   ├── tests.py
-│   ├── workflow.py
-│   └── cole_email_signature.html
+│   └── workflow.py
 ├── server.py
 ├── requirements.txt
 ├── pyproject.toml
+├── load_secrets.py
+├── startup.sh
+├── Dockerfile
+├── docker-compose.yaml
 ├── config.yaml (runtime generated)
 └── data/ (runtime created)
     ├── email_metrics/
@@ -378,7 +502,6 @@ ai-account-exec/
 - Purpose: Create contact record in HubSpot, associate with company, and update prospects list with contact ID
 - Integration usage:
   - Calls `hubspot.create_or_update_contact(first_name, last_name, company_id, job_title, email, linkedin_url)`
-- Subagent usage: None
 - Returns: Success message with contact ID or error string
 - Side Effects: Mutates `self.prospects` list by calling `persona.update_hubspot_contact_id(contact_id)` for matching prospects
 - Error Handling: try/except returns formatted error string
