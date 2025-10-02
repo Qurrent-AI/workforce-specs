@@ -6,7 +6,7 @@ The AI Account Executive is an automated sales prospecting and outreach system t
 
 The workflow supports multiple concurrent campaigns, each with custom AI logic definitions stored as Google Docs. It runs on scheduled basis: initial event-based outreach at 8am PT daily, and follow-ups at deterministic random times between 10am-2pm PT to avoid detection patterns. The system integrates with HubSpot CRM, Hunter.io for email enrichment, Tavily and Exa for research, SendGrid for email delivery, and Slack for human oversight.
 
-## Custom Spec Instructions
+## Custom Instructions
 *FDE-provided instructions for how this particular workforce specification should be configured*
 <!--
 [Provide custom instructions here around how to understand and document this particular workforce]
