@@ -8,11 +8,8 @@ The workflow supports multiple concurrent campaigns, each with custom AI logic d
 
 ## Custom Spec Instructions
 *FDE-provided instructions for how the workflow specification should be configured*
-<!--
-This workforce implements event-driven B2B sales outreach. The core logic—what constitutes a compelling event, target company, target persona, outreach selection criteria, and email guidelines—is externally defined in Google Drive documents and parsed by the CampaignManager agent. These definitions are injected into downstream agents' prompts as variables.
 
-The workflow demonstrates sophisticated multi-agent orchestration with parallel execution, rerun patterns for LLM-callable actions, and state management across multiple days of follow-up sequences. Pay special attention to how the system balances automation with human oversight through Slack notifications and demo/production record separation.
--->
+Create an Examples section that shows two happy-path outreach sequences.
 
 ## Path Audit
 
@@ -743,4 +740,3 @@ ENVIRONMENT:
 - Performs: Initiate deep research task with structured output
 - Behavior: Creates async research task, polls with get_task(task.id) until status="completed", extracts data.research_results
 - Returns: Task object with id, status, data (contains research_results array matching output schema)
-
