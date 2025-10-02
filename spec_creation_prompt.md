@@ -31,7 +31,7 @@ Enumerate each decision. For each, include:
 - Logic location: select from [1] internal code, [2] internal prompt, or [3] external prompt (refers to NL instructions outside of the agent's config file but inserted during runtime, thus enabling a non-technical outcome owner to influence the agent's behavior). Mention the specific agent, if applicable.
 - Dependencies/missing info: list required artifact/config/data if not available; do not guess
 
-Scope & omissions (strict): Describe what the workforce decides and when, not how it is implemented. Do not include function/variable names, exact API URLs/endpoints/methods, data structure types (JSON schemas), model hyperparameters, developer-only utilities/tests, qurrent abstractions (e.g., ingress, rerun hooks), file types/paths/line numbers, internal retry/exception details without user-visible effects, snapshot/state internals, or unused/deprecated logic.
+Strict omissions: Describe what the workforce decides and when, NOT how it is implemented. DO NOT include function or variable names, API URLs/endpoints/methods, data structure types (JSON schemas or references), model hyperparameters, developer-only utilities/tests, qurrent abstractions (e.g., ingress, rerun hooks), file types/paths/line numbers, internal retry/exception details without user-visible effects, snapshot/state internal, or unused/deprecated logic.
 
 Coverage: Be comprehensive for all behaviors the outcome owner may care about—prioritize LLM-driven choices, orchestration vs iterative agent routing, approvals, external communications, artifact generation/updates, and gating criteria. Organize by decision area for large codebases and maintain execution order.
 
