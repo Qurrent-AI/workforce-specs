@@ -22,9 +22,9 @@ Move through the following phases to recover and document the AI workforce:
 
 In the Architecture Overview, capture the key workflow components and how they transition from one to the next. Note opportunities for human intervention.
 
-In the Decision Ledger, produce a non-technical, outcome-focused list of decisions the workforce makes, in execution order. This augments (does not replace) technical mapping and MUST be placed under the template's "### Decision Ledger" section.
+In the Decision Ledger, produce a non-technical, outcome-focused, enumerated list of decisions the workforce makes, in execution order. This augments (does not replace) technical mapping and MUST be placed under the template's "### Decision Ledger" section. Decisions should be concise, but granular.
 
-For each decision, include:
+Enumerate each decision. For each, include:
 - Decision inputs, if applicable
 - Decision outputs, including any agent actions that are user-visible or consequential; note when outcomes stem from an LLM-invoked action (i.e., an action the model can trigger)
 - Decision logic: a concise summary of the natural-language rules or criteria that govern the outcome (via LLM-prompt instructions, but also direct code)
