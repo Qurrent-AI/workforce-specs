@@ -23,22 +23,21 @@ Derive the business narrative actually implied by code/docs:
 
 ### Phase 2 — Decision Audit
 
-In the Decision Audit, produce a non-technical, enumerated list of decisions the workforce makes, in execution order. For each, include:
+In the Decision Audit, produce a non-technical, enumerated list of decisions the workforce makes, in roughly the order they are executed. For each, include:
 
 - Decision inputs, if applicable
 - Decision outputs, including any agent actions that are user-visible or consequential; note when outcomes stem from an LLM-invoked action (i.e., an action the model can trigger)
 - Decision logic: a concise summary of the natural-language rules or criteria that govern the outcome (via LLM-prompt instructions, but also direct code)
-- Logic location: select from [1] internal code, [2] internal prompt, or [3] external prompt (refers to NL instructions outside of the agent's config file but inserted during runtime, thus enabling a non-technical outcome owner to influence the agent's behavior). For decisions made by technical agents, mention the agent name.
-- Dependencies/missing info: list required artifact/config/data if not available; do not guess
+- Logic location: select from [1] internal code, [2] internal prompt, or [3] external prompt (refers to NL instructions outside of the agent's config file but inserted during runtime, thus enabling a non-technical outcome owner to influence the agent's behavior). For decisions made by technical agents, mention that agent by it's name as defined in the code (for example, `OrchestratorAgent`).
 
-Coverage: Be comprehensive, and capture all business-related decisions an outcome owner would understand and stake an interest in. Do NOT capture all conditionals -- focus on core decisions as seen from the perspective of the user/outcome owner. Organize by decision area for large codebases and generally list on order of execution. Only document decisions that have some clear effect on an outcome.
+Coverage: Be comprehensive, and capture all business-related decisions an outcome owner would understand and stake an interest in. Do NOT capture all conditionals -- focus on decisions that seem "core" from the perspective of the user/outcome owner -- such decisions have clear, direct effects on workflow outcome. A simple chatbot may have only a handful of key decisions. Organize by decision area for large codebases and generally list on order of execution.
 
 Strict omissions: Describe what the workforce decides and when, NOT how it is implemented. DO NOT include:
 
 - Function or variable names
 - API URLs/endpoints/methods
 - Data structure types (JSON schemas or references)
-- Model hyperparameters
+- Model parameters
 - Developer-only utilities/tests
 - Qurrent abstractions (e.g., ingress, rerun hooks)
 - File types/paths/line numbers
@@ -157,16 +156,10 @@ Classify technical agents by pattern: Orchestrator, Task, Agentic Search. For ea
 
 Explain agent interplay in plain language (names, roles, interactions). No code.
 
-#### Utilities, Dependencies & Non-LLM Functions
+#### Utilities & Non-LLM Functions
 
-- Inventory utilities (e.g., PDF from markdown), libraries, and why needed.
+- Inventory utilities (e.g., PDF from markdown) and why it's needed.
 - Note where deterministic utilities end and technical agent parsing/transform begins.
-
-#### Feasibility & Consistency Checks: Self-Reflection
-
-- Verify the call stack is executable given agent definitions and returns.
-- Validate input→output continuity (file IDs vs names, argument shapes, returned structures).
-- Confirm approval gates, external sends, and storage protocols.
 
 =============================
 
@@ -227,11 +220,10 @@ Documents the possible paths of workflow execution through the lens of decisions
 - **[Integration Name]**: [What it provides/does]
 
 ## Directory Structure
+
 [workflow_name]/
 
 ## Agents
-
-**Note:** Document Console Agents first (what business stakeholders see), then Technical Agents (implementation details).
 
 ### Console Agents
 
@@ -305,21 +297,34 @@ Documents the possible paths of workflow execution through the lens of decisions
 ### `[SecondAgentClassName]`
 [Repeat structure above for additional agents]
 
-## YAML Configuration
-*Credentials used -- provide keys, not values*
+## Happy Path Call Stack
 
-CUSTOMER_KEY_DEV
+**Note:** Clearly indicate which agents are Technical Agents (TA) vs Console Agents (CA) in the call stack.
 
-LLM_KEYS:
-    ANTHROPIC_API_KEY
-    OPENAI_API_KEY
-
-[INTEGRATION_NAME]:
-    [CONFIG_KEY1]: [value/description]
-    [CONFIG_KEY2]: [value/description]
-
-[CUSTOM_SECTION_NAME]:
-    [VARIABLE_NAME]: [value/description]
+```text
+→ START EVENT: events.[EventType] "[sample message/trigger]"
+  ├─ @console_agent: [workflow].[console_agent_method]()
+  │  ├─ @observable: [workflow].[observable_method]()
+  │  │  └─ [TechnicalAgentInstance].handle_[event_name]() [TA direct action]
+  │  │     └─ [integration_instance].[method]() → [return value]
+  │  └─ @observable: [workflow].[another_observable]()
+  │     ├─ [TechnicalAgentInstance]() [TA LLM turn]
+  │     │  ├─ @llmcallable: [TechnicalAgentInstance].[method1]()
+  │     │  │  ├─ [integration_instance].[method]() → [return value]
+  │     │  │  └─ [util_module].[function]() → [return value]
+  │     │  └─ @llmcallable: [TechnicalAgentInstance].[method2]()
+  │     │     └─ [SubTechnicalAgentInstance].[direct_action]() [TA task agent] → [return value]
+  │
+→ INGRESS EVENT: [EventType] "[sample trigger/content]"
+  ├─ @console_agent: [workflow].[console_agent_method]()
+  │  └─ @observable: [workflow].[observable_method]()
+  │     ├─ [TechnicalAgentInstance].handle_[event_name]() [TA direct action]
+  │     └─ [TechnicalAgentInstance]() [TA LLM turn]
+  │        └─ @llmcallable: [TechnicalAgentInstance].[method]()
+  │           └─ [integration_instance].[method]() → [return value]
+  │
+→ WORKFLOW COMPLETE: [specific completion condition met]
+```
 
 ## Utils
 
@@ -327,10 +332,6 @@ LLM_KEYS:
 - Purpose: [what it does]
 - Implementation: [brief description of approach]
 - Dependencies: `[package_name]==[version]`
-
-## Dependencies
-- `[package_name]==[version]` - [why needed]
-- `[package_name]==[version]` - [why needed]
 
 ## Integrations
 
