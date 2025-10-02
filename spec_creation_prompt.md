@@ -131,7 +131,7 @@ Confirm whether all data needed for the happy path exists; record gaps.
 
 Fill the following Workforce Specification Template exactly with the details derived from your analysis of the codebase.
 
-```markdown
+---
 
 # Workforce Specification Template
 
@@ -328,6 +328,4 @@ Documents the possible paths of workflow execution through the lens of decisions
     [subdirectory]/
         [filename].py
         ...
-```
-
 ```
