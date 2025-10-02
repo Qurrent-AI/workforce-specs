@@ -18,11 +18,11 @@ Move through the following phases to recover and document the AI workforce:
     - Happy path (plain-language, executive-friendly).
     - Value proposition (what makes it compelling based on visible capabilities).
 
-#### Phase 2 — Path Audit
+#### Phase 2 — Non-Technical Path Audit
 
-In the Architecture Overview, capture the key workflow components and how they transition from one to the next. Note opportunities for human intervention.
+In the Agent Architecture, provide a non-technical overview of how the agents are used in the workflow and how they interact with each other. Note opportunities for human intervention.
 
-In the Decision Ledger, produce a non-technical, outcome-focused, enumerated list of decisions the workforce makes, in execution order. This augments (does not replace) technical mapping and MUST be placed under the template's "### Decision Ledger" section. Decisions should be concise, but granular.
+In the Decision Ledger, produce a non-technical, enumerated list of decisions the workforce makes, in execution order. This augments (does not replace) technical mapping. Decisions should be concise, but very granular.
 
 Enumerate each decision. For each, include:
 - Decision inputs, if applicable
@@ -34,6 +34,8 @@ Enumerate each decision. For each, include:
 Scope & omissions (strict): Describe what the workforce decides and when, not how it is implemented. Do not include function/variable names, exact API URLs/endpoints/methods, data structure types (JSON schemas), model hyperparameters, developer-only utilities/tests, qurrent abstractions (e.g., ingress, rerun hooks), file types/paths/line numbers, internal retry/exception details without user-visible effects, snapshot/state internals, or unused/deprecated logic.
 
 Coverage: Be comprehensive for all behaviors the outcome owner may care about—prioritize LLM-driven choices, orchestration vs iterative agent routing, approvals, external communications, artifact generation/updates, and gating criteria. Organize by decision area for large codebases and maintain execution order.
+
+**The Agent Architecture and Decision Ledger should should be outcome-focused and omit technical jargon. These artificats must be understandable and reproducible by a non-programmar with expertise in creating AI-agent process maps.**
 
 #### Phase 3 - Technical Details
 *Artificats from prior runs, in particular those with PII or other sensitive details, should be described only at a high-level. Never document API keys, tokens, database connection info, or any other secret credentials.*
@@ -109,14 +111,14 @@ High-level executive-style background summary of the system: describe what it do
 
 ## Path Audit
 
-Define the possible paths for workflow execution.
+Defines the possible paths for workflow execution.
 
-### Architecture Overview
+### Agent Architecture
 
-**High Level Architecture Components:**
-- **Phases**: [List each major phase and its purpose]
-    - Phase 1: [Name] - [What happens]
-    - Phase 2: [Name] - [What happens]
+**Core Agent Responsibilities:**
+- **Functions**: [List each major function and its location in the workflow]
+    - Function 1: [Name] - [What, when, and why]
+    - Function 2: [Name] - [What, when, and why]
 - **User Touchpoints**: [Where human input/approval is required]
 
 ### Decision Ledger
