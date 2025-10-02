@@ -195,34 +195,6 @@ Documents the possible paths of workflow execution through the lens of decisions
 - [3] [Decision Name]
 - ...
 
-## Data & Formats
-
-### Referenced Documents Inventory and Input Data
-*Excluding mentions of specific PII, financial information, or other sensitive details*
-
-- [Document ID/Name]
-    - Format: [PDF/JSON/Plain text/etc.]
-    - Source: [System/Custom Integration/User upload]
-    - Intended Use: [Which phase/step consumes it]
-
-### Example Output Artifacts
-
-- [Document ID/Name]
-    - Type: [Report/Email/Message/etc.]
-    - Format: [PDF report/Email/JSON/etc.]
-    - Recipients: [Who receives it]
-    - Contents: [Key sections/data included]
-
-## Integration Summary
-
-**Integrations:**
-[List integrations that connect to actual services:]
-- **[Integration Name]**: [What it provides/does]
-
-## Directory Structure
-
-[workflow_name]/
-
 ## Agents
 
 ### Console Agents
@@ -326,12 +298,23 @@ Documents the possible paths of workflow execution through the lens of decisions
 → WORKFLOW COMPLETE: [specific completion condition met]
 ```
 
-## Utils
+## Data & Formats
 
-**`[util_module].[function_name]([param1]: [Type], [param2]: [Type]) -> [ReturnType]`**
-- Purpose: [what it does]
-- Implementation: [brief description of approach]
-- Dependencies: `[package_name]==[version]`
+### Referenced Documents Inventory and Input Data
+*Excluding mentions of specific PII, financial information, or other sensitive details*
+
+- [Document ID/Name]
+    - Format: [PDF/JSON/Plain text/etc.]
+    - Source: [System/Custom Integration/User upload]
+    - Intended Use: [Which phase/step consumes it]
+
+### Example Output Artifacts
+
+- [Document ID/Name]
+    - Type: [Report/Email/Message/etc.]
+    - Format: [PDF report/Email/JSON/etc.]
+    - Recipients: [Who receives it]
+    - Contents: [Key sections/data included]
 
 ## Integrations
 
@@ -366,4 +349,19 @@ Documents the possible paths of workflow execution through the lens of decisions
 - `[CustomEventClassName]`:
     - Event type: `"[EventTypeName]"`
     - Required: `[field_name]: [type]`, `[field_name]: [type]`
+
+## Utils
+
+**`[util_module].[function_name]([param1]: [Type], [param2]: [Type]) -> [ReturnType]`**
+- Purpose: [what it does]
+- Implementation: [brief description of approach]
+- Dependencies: `[package_name]==[version]`
+
+## Directory Structure
+
+```text
+[workflow_name]/
+    [subdirectory]/
+        [filename].py
+        ...
 ```
