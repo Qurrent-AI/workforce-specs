@@ -147,7 +147,7 @@ Define the possible paths for workflow execution.
     - Recipients: [Who receives it]
     - Contents: [Key sections/data included]
 
-## Integrations
+## Integration Summary
 
 **Integrations:**
 [List integrations that connect to actual services:]
