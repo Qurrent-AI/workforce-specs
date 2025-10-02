@@ -58,7 +58,7 @@ Strict omissions: Describe what the workforce decides and when, NOT how it is im
 
 *Artificats from prior runs, in particular those with PII or other sensitive details, should be described only at a high-level. Never document API keys, tokens, database connection info, or any other secret credentials.*
 
-#### Design Patterns
+#### Agent Design
 
 ##### Console Agents and Observables
 
@@ -89,23 +89,6 @@ Technical agents (Python classes extending `Agent`) provide LLM-powered reasonin
 - **Task Agents**: Complete atomic tasks in one turn. Parse unstructured documents (PDFs, emails, images) rather than using deterministic utils. No @llmcallables. Reset message thread. Use thinking-enabled LLMs (temp=1) for accuracy.
 - **Agentic Search Agents**: Action-driven information lookup with @llmcallable(rerun_agent=True). Autonomous gathering before responding.
 
-**Pattern Selection:**
-
-- Use Task Agents for parsing unknown/unstructured data; leverage LLM robustness over brittle deterministic logic
-- Use Orchestrators for multi-step processes with uncertain flow, multiple parties, or accumulated context needs
-- Use Agentic Search when autonomous information gathering required before response
-
-**LLM Configuration:**
-
-- Orchestrators: claude-sonnet-4, temp=0, timeout=120s (optimize for speed)
-- Task Agents: claude-sonnet-4 with thinking (budget_tokens=1024), temp=1, timeout=240s (optimize for accuracy)
-
-**Orchestrator Requirements:**
-
-- Structured JSON response with `workflow_complete` boolean and `actions` array
-- Confirm external communications (Slack/email) before sending in same turn
-- Keep supervisor informed of planned actions and outcomes
-
 **Direct actions vs @llmcallables:**
 
 - Direct actions: called from code; returns not visible to LLM unless appended
@@ -132,34 +115,15 @@ Build a Referenced Documents & Data Inventory:
 
 Confirm whether all data needed for the happy path exists; record gaps.
 
-#### Integration Behavior
-
-- Enumerate external systems and how they are used.
-- Capture approval gates (e.g., confirm-before-send) and concrete message/artifact formats if present.
-
-#### Agents
-
-Document both console agents and technical agents:
-
-**Console Agents:**
-
-- Identify which workflow methods use `@console_agent` decorator
-- Document their observable tasks (methods with `@observable` decorator)
-- Describe what technical agents, integrations, and deterministic logic they orchestrate
-- Note their docstrings (shown to stakeholders in The Supervisor)
-
-**Technical Agents:**
-Classify technical agents by pattern: Orchestrator, Task, Agentic Search. For each technical agent, enumerate:
-    - Direct actions (called from code; side effects; file writes returning file_id; whether results are appended to thread)
-    - @llmcallables (invoked by LLM; returns visible to model)
-    - Responsibilities, instance attributes, create parameters, LLM config (model/mode/timeouts), prompt strategy (state-machine framing; structured actions discipline)
-
-Explain agent interplay in plain language (names, roles, interactions). No code.
-
 #### Utilities & Non-LLM Functions
 
 - Inventory utilities (e.g., PDF from markdown) and why it's needed.
 - Note where deterministic utilities end and technical agent parsing/transform begins.
+
+#### Integration Behavior
+
+- Enumerate external systems and how they are used.
+- Capture approval gates (e.g., confirm-before-send) and concrete message/artifact formats if present.
 
 =============================
 
@@ -195,7 +159,7 @@ Documents the possible paths of workflow execution through the lens of decisions
 - [3] [Decision Name]
 - ...
 
-## Agents
+## Agent Design
 
 ### Console Agents
 
