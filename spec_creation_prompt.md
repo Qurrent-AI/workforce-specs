@@ -209,10 +209,9 @@ Define the possible paths for workflow execution.
 ### `[SecondAgentClassName]`
 [Repeat structure above for additional agents]
 
-## Configuration
+## YAML Configuration
 *Credentials used -- provide keys, not values*
 
-```yaml
 CUSTOMER_KEY_DEV
 
 LLM_KEYS:
@@ -225,7 +224,6 @@ LLM_KEYS:
 
 [CUSTOM_SECTION_NAME]:
     [VARIABLE_NAME]: [value/description]
-```
 
 ## Utils
 
